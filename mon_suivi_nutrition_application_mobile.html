@@ -1,0 +1,1193 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Mon Suivi Nutrition & Énergie</title>
+  <!-- Chargement de Tailwind CSS pour une mise en page mobile fluide et moderne -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Police Inter très lisible sur écran mobile -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            sage: {
+              50: '#f4f7f5',
+              100: '#e3ece6',
+              200: '#c7d9ce',
+              300: '#9fc0ad',
+              500: '#5c8d72',
+              600: '#46725a',
+              700: '#385b48',
+              800: '#2f493b',
+            },
+            terra: {
+              50: '#fdf6f3',
+              100: '#fbeae3',
+              200: '#f6d2c3',
+              500: '#d47451',
+              600: '#bc5c3a',
+              700: '#9c492d',
+            }
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    /* Styles complémentaires pour le confort tactile et le défilement fluide */
+    body {
+      background-color: #f4f7f5;
+      color: #1e293b;
+      -webkit-tap-highlight-color: transparent;
+      padding-bottom: 92px;
+    }
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    .card-shadow {
+      box-shadow: 0 2px 10px rgba(47, 73, 59, 0.06);
+    }
+    .safe-bottom {
+      padding-bottom: env(safe-area-inset-bottom, 8px);
+    }
+  </style>
+</head>
+<body class="font-sans antialiased selection:bg-sage-200">
+
+  <!-- EN-TÊTE FIXE MOBILE -->
+  <header class="sticky top-0 z-30 bg-sage-700 text-white px-4 py-3.5 shadow-md">
+    <div class="max-w-lg mx-auto flex items-center justify-between gap-2">
+      <div>
+        <h1 class="text-lg sm:text-xl font-extrabold tracking-tight leading-tight">Mon Équilibre Quotidien</h1>
+        <p class="text-xs sm:text-sm text-sage-100 mt-0.5">Programme Halal • ~1 575 kcal / jour</p>
+      </div>
+      <div id="header-badge" class="bg-sage-800/80 border border-sage-500/40 rounded-xl px-3 py-1.5 text-right shrink-0">
+        <span class="block text-[11px] uppercase tracking-wider text-sage-200">Total du jour</span>
+        <span id="daily-kcal-display" class="text-base font-bold text-white">1 570 kcal</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- CONTENU PRINCIPAL (MAX-WIDTH MOBILE CENTRÉ) -->
+  <main class="max-w-lg mx-auto px-3.5 pt-4 space-y-5">
+
+    <!-- ==================== ONGLET 1 : AUJOURD'HUI ==================== -->
+    <section id="tab-today" class="space-y-4">
+      <!-- Bandeau repère Fajr & Hydratation -->
+      <div class="bg-white rounded-2xl p-3.5 border border-sage-200 card-shadow flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-sage-100 text-sage-700 flex items-center justify-center shrink-0 font-bold text-lg" aria-hidden="true">💧</div>
+          <div>
+            <p class="text-sm font-bold text-slate-800">Réveil Fajr (6h00) & Hydratation</p>
+            <p class="text-xs text-slate-600">1 grand verre d'eau au réveil • Objectif 1,5 L/jour</p>
+          </div>
+        </div>
+        <button onclick="toggleWaterCheck()" id="water-btn" class="px-3 py-2 rounded-xl text-xs font-bold border transition active:scale-95 shrink-0 bg-sage-50 text-sage-700 border-sage-300">
+          Verre bu ✓
+        </button>
+      </div>
+
+      <!-- Sélecteur de jour (Jour 1 à Jour 7) -->
+      <div>
+        <div class="flex items-center justify-between mb-2 px-1">
+          <span class="text-xs font-bold uppercase tracking-wider text-sage-700">Choisir le jour</span>
+          <span id="sport-day-indicator" class="text-xs font-semibold text-terra-600"></span>
+        </div>
+        <div id="day-selector" class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+          <!-- Boutons générés dynamiquement en JS -->
+        </div>
+      </div>
+
+      <!-- Barre de progression des repas validés -->
+      <div class="bg-white rounded-2xl p-3.5 border border-sage-200 card-shadow">
+        <div class="flex justify-between items-center text-sm font-semibold mb-1.5">
+          <span class="text-slate-700">Repas validés aujourd'hui</span>
+          <span id="meals-progress-text" class="text-sage-700 font-bold">0 / 5</span>
+        </div>
+        <div class="w-full h-3 bg-sage-100 rounded-full overflow-hidden">
+          <div id="meals-progress-bar" class="h-full bg-sage-600 rounded-full transition-all duration-300" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <!-- Liste des 5 repas de la journée -->
+      <div id="meals-container" class="space-y-3.5">
+        <!-- Cartes de repas générées dynamiquement -->
+      </div>
+
+      <!-- Rappel visuel Statine du soir -->
+      <div class="bg-terra-50 border-2 border-terra-200 rounded-2xl p-4 flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <div class="w-11 h-11 rounded-xl bg-terra-100 text-terra-700 flex items-center justify-center font-extrabold text-lg shrink-0">💊</div>
+          <div>
+            <p class="text-sm font-bold text-terra-700">Rappel du soir (~23h30)</p>
+            <p class="text-xs sm:text-sm text-slate-700">Prendre la <strong>Statine 5 mg</strong> au coucher avec un verre d'eau.</p>
+          </div>
+        </div>
+        <button onclick="toggleEveningStatin()" id="statin-today-btn" class="px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold border transition active:scale-95 shrink-0 bg-white text-terra-700 border-terra-300">
+          À prendre
+        </button>
+      </div>
+    </section>
+
+    <!-- ==================== ONGLET 2 : SUIVI & ÉNERGIE ==================== -->
+    <section id="tab-tracking" class="hidden space-y-4">
+      <div class="bg-white rounded-2xl p-4 border border-sage-200 card-shadow space-y-4">
+        <div class="border-b border-slate-100 pb-2.5">
+          <h2 class="text-lg font-extrabold text-sage-800">Bilan du jour (<span id="tracking-day-label">Lundi</span>)</h2>
+          <p class="text-xs sm:text-sm text-slate-500">Appuyez simplement sur les boutons pour noter votre journée.</p>
+        </div>
+
+        <!-- 1. Énergie ressentie (1 à 5) -->
+        <div>
+          <label class="block text-sm font-bold text-slate-800 mb-2">1. Niveau d'énergie aujourd'hui</label>
+          <div id="energy-rating" class="grid grid-cols-5 gap-2">
+            <!-- Boutons 1 à 5 -->
+          </div>
+          <p id="energy-label" class="text-xs text-sage-700 font-medium mt-1.5">Sélectionnez une note de 1 (fatiguée) à 5 (pleine forme)</p>
+        </div>
+
+        <!-- 2. Qualité du sommeil (post-Fajr 6h) -->
+        <div>
+          <label class="block text-sm font-bold text-slate-800 mb-2">2. Sommeil & rendormissement après le Fajr (6h)</label>
+          <div id="sleep-rating" class="grid grid-cols-3 gap-2">
+            <!-- Boutons qualité sommeil -->
+          </div>
+        </div>
+
+        <!-- 3. Activité physique (Marche / Salle) -->
+        <div>
+          <label class="block text-sm font-bold text-slate-800 mb-2">3. Marche & Activité physique</label>
+          <div id="activity-options" class="grid grid-cols-2 gap-2">
+            <!-- Options marche / piscine / spinning -->
+          </div>
+        </div>
+
+        <!-- 4. Confort de la cheville -->
+        <div>
+          <label class="block text-sm font-bold text-slate-800 mb-2">4. Confort de la cheville</label>
+          <div id="ankle-options" class="grid grid-cols-3 gap-2">
+            <!-- Options cheville -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Suivi Hebdomadaire Poids & Tour de taille -->
+      <div class="bg-white rounded-2xl p-4 border border-sage-200 card-shadow space-y-3.5">
+        <div>
+          <h2 class="text-lg font-extrabold text-sage-800">Mesures Hebdomadaires</h2>
+          <p class="text-xs sm:text-sm text-slate-500">Départ le 5 déc. : <strong>89,0 kg</strong> • Pesée 1 fois/semaine le matin à jeun.</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="weight-input" class="block text-xs font-bold uppercase text-slate-600 mb-1">Poids actuel (kg)</label>
+            <input type="number" step="0.1" id="weight-input" placeholder="Ex: 88.4" class="w-full px-3.5 py-3 rounded-xl border border-sage-300 text-base font-bold text-slate-800 focus:outline-none focus:border-sage-600" />
+          </div>
+          <div>
+            <label for="waist-input" class="block text-xs font-bold uppercase text-slate-600 mb-1">Tour de taille (cm)</label>
+            <input type="number" step="0.5" id="waist-input" placeholder="Ex: 102" class="w-full px-3.5 py-3 rounded-xl border border-sage-300 text-base font-bold text-slate-800 focus:outline-none focus:border-sage-600" />
+          </div>
+        </div>
+
+        <button onclick="saveBodyMetrics()" class="w-full py-3.5 rounded-xl bg-sage-600 hover:bg-sage-700 text-white font-bold text-sm sm:text-base shadow-sm transition active:scale-[0.99]">
+          Enregistrer la mesure de la semaine
+        </button>
+
+        <!-- Historique des mesures -->
+        <div id="metrics-history" class="pt-2 space-y-2">
+          <!-- Historique généré dynamiquement -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== ONGLET 3 : COURSES ==================== -->
+    <section id="tab-shopping" class="hidden space-y-4">
+      <div class="bg-white rounded-2xl p-4 border border-sage-200 card-shadow flex items-center justify-between gap-2">
+        <div>
+          <h2 class="text-lg font-extrabold text-sage-800">Liste de Courses (Maroc)</h2>
+          <p class="text-xs sm:text-sm text-slate-500">Adaptée aux aliments autorisés (1 semaine)</p>
+        </div>
+        <button onclick="resetShoppingList()" class="px-3 py-2 rounded-xl bg-terra-50 text-terra-700 border border-terra-200 text-xs font-bold active:scale-95">
+          Tout décocher
+        </button>
+      </div>
+
+      <div id="shopping-container" class="space-y-3.5">
+        <!-- Rayons générés dynamiquement -->
+      </div>
+    </section>
+
+    <!-- ==================== ONGLET 4 : IDÉES & CONSEILS ==================== -->
+    <section id="tab-ideas" class="hidden space-y-4">
+      <!-- Rappel des aliments exclus -->
+      <div class="bg-terra-50 border border-terra-200 rounded-2xl p-4">
+        <h2 class="text-base font-extrabold text-terra-700 mb-1.5">Aliments écartés dans ce programme</h2>
+        <p class="text-xs sm:text-sm text-slate-700 leading-relaxed">
+          Pas de sardines ni maquereaux (uniquement <strong>poissons blancs</strong> et thon au naturel), pas de flocons d'avoine, pas de pois chiches, pas d'épinards, pas de semoule. Viande rouge remplacée par de la <strong>viande hachée à 5 % MG</strong>.
+        </p>
+      </div>
+
+      <!-- Nouvelles idées de recettes marocaines légères -->
+      <div class="space-y-3">
+        <h2 class="text-lg font-extrabold text-sage-800 px-1">Idées de Plats Marocains Légers</h2>
+
+        <article class="bg-white rounded-2xl p-4 border border-sage-200 card-shadow space-y-1.5">
+          <div class="flex items-center justify-between">
+            <h3 class="text-base font-bold text-sage-800">1. Tajine de cabillaud ou merlan au fenouil</h3>
+            <span class="text-xs font-bold px-2.5 py-1 rounded-lg bg-sage-100 text-sage-700">~510 kcal</span>
+          </div>
+          <p class="text-sm text-slate-600 leading-relaxed">
+            <strong>Ingrédients :</strong> 140 g de filet de poisson blanc, 1 bulbe de fenouil émincé, 1 tomate, 1 carotte, curcuma, gingembre, coriandre fraîche, citron et 1 c. à café d'huile d'olive. Accompagné de 100 g de pommes de terre vapeur.
+          </p>
+        </article>
+
+        <article class="bg-white rounded-2xl p-4 border border-sage-200 card-shadow space-y-1.5">
+          <div class="flex items-center justify-between">
+            <h3 class="text-base font-bold text-sage-800">2. Kefta 5 % MG moelleuse aux courgettes râpées</h3>
+            <span class="text-xs font-bold px-2.5 py-1 rounded-lg bg-sage-100 text-sage-700">~530 kcal</span>
+          </div>
+          <p class="text-sm text-slate-600 leading-relaxed">
+            <strong>Astuce :</strong> Mélanger 120 g de viande hachée 5 % MG avec 1 petite courgette râpée et pressée, cumin, paprika, oignon et persil. Former des boulettes et mijoter dans une sauce tomate légère avec 100 g de riz complet cuit.
+          </p>
+        </article>
+
+        <article class="bg-white rounded-2xl p-4 border border-sage-200 card-shadow space-y-1.5">
+          <div class="flex items-center justify-between">
+            <h3 class="text-base font-bold text-sage-800">3. Blanc de poulet citron confit & olives rincées</h3>
+            <span class="text-xs font-bold px-2.5 py-1 rounded-lg bg-sage-100 text-sage-700">~520 kcal</span>
+          </div>
+          <p class="text-sm text-slate-600 leading-relaxed">
+            <strong>Astuce anti-sel :</strong> Rincer abondamment 4 à 5 olives vertes à l'eau claire et utiliser un petit quartier de citron confit rincé pour parfumer 130 g de poulet sans peau avec 200 g de haricots verts et 100 g de haricots blancs cuits.
+          </p>
+        </article>
+
+        <article class="bg-white rounded-2xl p-4 border border-sage-200 card-shadow space-y-1.5">
+          <div class="flex items-center justify-between">
+            <h3 class="text-base font-bold text-sage-800">4. Poêlée de lentilles & patate douce aux épices</h3>
+            <span class="text-xs font-bold px-2.5 py-1 rounded-lg bg-sage-100 text-sage-700">~480 kcal</span>
+          </div>
+          <p class="text-sm text-slate-600 leading-relaxed">
+            <strong>Idéal dîner léger :</strong> 100 g de lentilles cuites + 80 g de dés de patate douce mijotés avec tomate, ail, cumin et coriandre, servis avec 1 œuf dur ou 90 g de filet de sole grillé.
+          </p>
+        </article>
+      </div>
+
+      <!-- Conseils pratiques -->
+      <div class="bg-white rounded-2xl p-4 border border-sage-200 card-shadow space-y-3">
+        <h2 class="text-lg font-extrabold text-sage-800">Règles Simples au Quotidien</h2>
+        <ul class="space-y-2.5 text-sm text-slate-700">
+          <li class="flex gap-2.5">
+            <span class="text-sage-600 font-bold">✓</span>
+            <span><strong>La règle de l'assiette en famille :</strong> Remplir d'abord la moitié de l'assiette avec les légumes du tajine, un quart avec le poisson/poulet, et un quart avec les féculents.</span>
+          </li>
+          <li class="flex gap-2.5">
+            <span class="text-sage-600 font-bold">✓</span>
+            <span><strong>En cas de petite faim :</strong> Boire d'abord un grand verre d'eau ou une tisane sans sucre, puis prendre un yaourt nature ou quelques rondelles de concombre/tomate plutôt que du pain supplémentaire.</span>
+          </li>
+          <li class="flex gap-2.5">
+            <span class="text-sage-600 font-bold">✓</span>
+            <span><strong>Protection de la cheville (Mardi & Samedi) :</strong> Privilégier la piscine qui porte le corps et protège l'articulation ; sur le vélo spinning, garder une résistance modérée sans douleur.</span>
+          </li>
+          <li class="flex gap-2.5">
+            <span class="text-sage-600 font-bold">✓</span>
+            <span><strong>Invitations (2 fois/mois) :</strong> Profiter sereinement du repas sans culpabilité, en limitant simplement les pâtisseries sucrées, puis reprendre le rythme normal dès le repas suivant.</span>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- NOTIFICATION TOAST DISCRÈTE -->
+  <div id="toast" class="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-slate-800 text-white text-sm font-semibold px-4 py-2.5 rounded-xl shadow-lg opacity-0 pointer-events-none transition-opacity duration-200">
+    Enregistré ✓
+  </div>
+
+  <!-- BARRE DE NAVIGATION INFÉRIEURE FIXE STYLE APPLICATION MOBILE -->
+  <nav class="fixed bottom-0 inset-x-0 z-40 bg-white border-t border-sage-200 shadow-lg safe-bottom" aria-label="Navigation principale">
+    <div class="max-w-lg mx-auto grid grid-cols-4">
+      <button onclick="switchTab('today')" id="nav-today" class="nav-btn flex flex-col items-center justify-center py-2.5 px-1 text-sage-700 font-bold border-t-4 border-sage-600">
+        <span class="text-xl leading-none mb-1">🍽️</span>
+        <span class="text-xs">Aujourd'hui</span>
+      </button>
+      <button onclick="switchTab('tracking')" id="nav-tracking" class="nav-btn flex flex-col items-center justify-center py-2.5 px-1 text-slate-500 font-medium border-t-4 border-transparent">
+        <span class="text-xl leading-none mb-1">⭐</span>
+        <span class="text-xs">Suivi</span>
+      </button>
+      <button onclick="switchTab('shopping')" id="nav-shopping" class="nav-btn flex flex-col items-center justify-center py-2.5 px-1 text-slate-500 font-medium border-t-4 border-transparent">
+        <span class="text-xl leading-none mb-1">🛒</span>
+        <span class="text-xs">Courses</span>
+      </button>
+      <button onclick="switchTab('ideas')" id="nav-ideas" class="nav-btn flex flex-col items-center justify-center py-2.5 px-1 text-slate-500 font-medium border-t-4 border-transparent">
+        <span class="text-xl leading-none mb-1">💡</span>
+        <span class="text-xs">Idées</span>
+      </button>
+    </div>
+  </nav>
+
+  <script>
+    /**
+     * DONNÉES DU PROGRAMME NUTRITIONNEL (7 JOURS + ALTERNATIVES COMPATIBLES)
+     * Contraintes strictes respectées :
+     * - Aucune sardine, aucun maquereau (poissons blancs + thon au naturel uniquement)
+     * - Aucun flocon d'avoine, aucun pois chiche, aucun épinard, aucune semoule
+     * - Viande rouge : uniquement viande hachée 5 % MG (max 2x/semaine)
+     * - Pain complet sans sel, lentilles, haricots blancs, riz complet, pommes de terre, patate douce
+     */
+    const WEEKLY_PLAN = [
+      {
+        id: 'lundi',
+        shortName: 'Lun',
+        fullName: 'Lundi',
+        sport: '',
+        meals: [
+          {
+            id: 'pdj',
+            label: 'Petit-déjeuner',
+            time: '09h30',
+            options: [
+              { text: 'Pain complet sans sel (60 g) + fromage frais / jben léger (40 g) + 1 œuf + tomate et concombre (100 g) + café ou thé sans sucre', kcal: 350 },
+              { text: 'Pain complet sans sel (60 g) + 2 œufs à la coque ou pochés + rondelles de concombre (100 g) + café ou thé sans sucre', kcal: 355 },
+              { text: 'Pain complet sans sel (60 g) + purée d\'amande ou amlou léger (10 g) + yaourt nature sans sucre (125 g) + café ou thé sans sucre', kcal: 350 }
+            ]
+          },
+          {
+            id: 'col1',
+            label: 'Collation matin',
+            time: '12h00',
+            options: [
+              { text: 'Café sans sucre + chocolat noir 70 % min. (15 g) + 5 amandes nature (7 g)', kcal: 130 },
+              { text: 'Café sans sucre + 1 biscuit complet pauvre en sucres (15–20 g) + 1 noix (5 g)', kcal: 125 },
+              { text: 'Café sans sucre + yaourt nature 0–2 % (125 g) + cannelle', kcal: 85 }
+            ]
+          },
+          {
+            id: 'dej',
+            label: 'Déjeuner',
+            time: '14h30',
+            options: [
+              { text: 'Tajine de poulet sans peau (130 g cru) aux courgettes, carottes et petits pois (200 g) + pommes de terre (100 g cuit) + 8 g huile d\'olive', kcal: 520 },
+              { text: 'Filet de cabillaud ou merlan au four (140 g cru) + fenouil, tomates et poivrons (220 g) + riz complet cuit (100 g) + 8 g huile d\'olive', kcal: 515 },
+              { text: 'Escalope de dinde grillée aux herbes (130 g cru) + haricots verts et carottes (200 g) + lentilles cuites (110 g) + 8 g huile d\'olive', kcal: 525 }
+            ]
+          },
+          {
+            id: 'col2',
+            label: 'Goûter',
+            time: '16h00',
+            options: [
+              { text: 'Café ou tisane sans sucre + 1 pomme moyenne (150 g) + yaourt nature 0–2 % (125 g)', kcal: 155 },
+              { text: 'Café sans sucre + chocolat noir 70 % (15 g) + 1 poire (140 g)', kcal: 150 },
+              { text: 'Tisane sans sucre + 2 clémentines (140 g) + 6 amandes nature (8 g)', kcal: 135 }
+            ]
+          },
+          {
+            id: 'din',
+            label: 'Dîner',
+            time: '20h15',
+            options: [
+              { text: 'Velouté de potiron et poireaux (250 ml) + filet de merlan ou cabillaud (130 g cru) + haricots verts vapeur (150 g) + 5 g huile d\'olive + pain complet sans sel (30 g)', kcal: 415 },
+              { text: 'Omelette aux courgettes et oignons (2 œufs + 150 g courgettes + 5 g huile d\'olive) + salade verte + pain complet sans sel (40 g)', kcal: 435 },
+              { text: 'Zaalouk léger aubergines/tomates/poivrons (220 g) + thon au naturel égoutté (100 g) + 6 g huile d\'olive + pain complet sans sel (35 g)', kcal: 430 }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'mardi',
+        shortName: 'Mar',
+        fullName: 'Mardi',
+        sport: '🏊‍♀️ Salle : Piscine / Spinning',
+        meals: [
+          {
+            id: 'pdj',
+            label: 'Petit-déjeuner',
+            time: '09h30',
+            options: [
+              { text: 'Pain complet sans sel (60 g) + 1 œuf à la coque + yaourt nature ou raïb sans sucre (125 g) + 1 clémentine (80 g) + café/thé sans sucre', kcal: 350 },
+              { text: 'Pain complet sans sel (60 g) + fromage frais / jben léger (40 g) + 1 œuf + tomate et concombre + café/thé sans sucre', kcal: 350 },
+              { text: 'Pain complet sans sel (60 g) + avocat écrasé (50 g) + 1 œuf dur + café ou thé sans sucre', kcal: 370 }
+            ]
+          },
+          {
+            id: 'col1',
+            label: 'Collation matin',
+            time: '12h00',
+            options: [
+              { text: 'Café sans sucre + 1 biscuit complet pauvre en sucres (15–20 g) + 1 noix (5 g)', kcal: 125 },
+              { text: 'Café sans sucre + chocolat noir 70 % (15 g) + 5 amandes (7 g)', kcal: 130 },
+              { text: 'Café sans sucre + 1 galette de riz complet (15 g) + fromage frais léger (20 g)', kcal: 105 }
+            ]
+          },
+          {
+            id: 'dej',
+            label: 'Déjeuner',
+            time: '14h30',
+            options: [
+              { text: 'Filet de dorade ou sole grillé/au four (140 g cru) + salade tomate, oignon, poivron, coriandre (200 g) + lentilles cuites (120 g) + 8 g huile d\'olive', kcal: 515 },
+              { text: 'Tajine de poulet sans peau (130 g cru) aux courgettes et navets (220 g) + haricots blancs cuits (100 g) + 8 g huile d\'olive', kcal: 525 },
+              { text: 'Filet de pageot ou cabillaud (140 g cru) + brocolis et carottes vapeur (200 g) + patate douce cuite (110 g) + 8 g huile d\'olive', kcal: 520 }
+            ]
+          },
+          {
+            id: 'col2',
+            label: 'Goûter',
+            time: '16h00',
+            options: [
+              { text: 'Café sans sucre + chocolat noir 70 % (15 g) + 1 poire (140 g)', kcal: 150 },
+              { text: 'Café sans sucre + yaourt nature (125 g) + 1 pomme (140 g)', kcal: 155 },
+              { text: 'Tisane sans sucre + 1 kiwi ou clémentine (100 g) + 6 amandes (8 g)', kcal: 125 }
+            ]
+          },
+          {
+            id: 'din',
+            label: 'Dîner',
+            time: '20h15',
+            options: [
+              { text: 'Omelette aux courgettes et oignons (2 œufs = 120 g + 150 g courgettes + 5 g huile d\'olive) + salade verte (80 g) + pain complet sans sel (40 g)', kcal: 435 },
+              { text: 'Soupe de courgettes et poireaux (250 ml) + blanc de poulet grillé (120 g cru) + haricots verts (150 g) + 5 g huile d\'olive + pain complet sans sel (30 g)', kcal: 445 },
+              { text: 'Filet de sole ou merlan au citron (130 g cru) + ratatouille légère (200 g) + 5 g huile d\'olive + pain complet sans sel (35 g)', kcal: 420 }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'mercredi',
+        shortName: 'Mer',
+        fullName: 'Mercredi',
+        sport: '',
+        meals: [
+          {
+            id: 'pdj',
+            label: 'Petit-déjeuner',
+            time: '09h30',
+            options: [
+              { text: 'Pain complet sans sel (60 g) + purée d\'amande ou amlou léger maison (10 g) + raïb ou yaourt nature sans sucre (125 g) + café/thé sans sucre', kcal: 350 },
+              { text: 'Pain complet sans sel (60 g) + fromage frais léger / jben (40 g) + 10 g noix concassées + 1/2 pomme + café/thé sans sucre', kcal: 360 },
+              { text: 'Pain complet sans sel (60 g) + 2 œufs brouillés sans beurre + rondelles de tomate + café ou thé sans sucre', kcal: 355 }
+            ]
+          },
+          {
+            id: 'col1',
+            label: 'Collation matin',
+            time: '12h00',
+            options: [
+              { text: 'Café sans sucre + chocolat noir 70 % (15 g)', kcal: 85 },
+              { text: 'Café sans sucre + 6 amandes nature (8 g) + 1 clémentine (80 g)', kcal: 95 },
+              { text: 'Café sans sucre + 1 biscuit complet pauvre en sucres (15 g)', kcal: 80 }
+            ]
+          },
+          {
+            id: 'dej',
+            label: 'Déjeuner',
+            time: '14h30',
+            options: [
+              { text: 'Tajine de dinde ou blanc de poulet (130 g cru) aux tomates, aubergines (150 g) + haricots blancs cuits (100 g) + 8 g huile d\'olive', kcal: 525 },
+              { text: 'Filet de merlan ou cabillaud (140 g cru) + courgettes, carottes et fenouil (220 g) + pommes de terre (100 g cuit) + 8 g huile d\'olive', kcal: 515 },
+              { text: 'Poulet mijoté au citron confit rincé et 4 olives rincées (130 g cru) + haricots verts (200 g) + riz complet cuit (100 g) + 7 g huile d\'olive', kcal: 530 }
+            ]
+          },
+          {
+            id: 'col2',
+            label: 'Goûter',
+            time: '16h00',
+            options: [
+              { text: 'Café sans sucre + fromage blanc ou yaourt nature (125 g) + 1 pomme (140 g)', kcal: 160 },
+              { text: 'Café sans sucre + chocolat noir 70 % (15 g) + 1 clémentine (90 g)', kcal: 125 },
+              { text: 'Tisane sans sucre + 1 poire (140 g) + 5 amandes (7 g)', kcal: 135 }
+            ]
+          },
+          {
+            id: 'din',
+            label: 'Dîner',
+            time: '20h15',
+            options: [
+              { text: 'Soupe de légumes verts et lentilles légères (300 ml, sans smen ni farine blanche) + filet de cabillaud ou blanc de poulet (100 g cru) + pain complet sans sel (35 g)', kcal: 450 },
+              { text: 'Velouté de potiron (250 ml) + 2 œufs durs ou pochés + salade verte + pain complet sans sel (35 g)', kcal: 425 },
+              { text: 'Filet de dorade au four aux herbes (130 g cru) + brocolis vapeur (180 g) + 5 g huile d\'olive + pain complet sans sel (35 g)', kcal: 420 }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'jeudi',
+        shortName: 'Jeu',
+        fullName: 'Jeudi',
+        sport: '',
+        meals: [
+          {
+            id: 'pdj',
+            label: 'Petit-déjeuner',
+            time: '09h30',
+            options: [
+              { text: 'Pain complet sans sel (60 g) + 2 œufs pochés ou à la coque (120 g) + tomates et concombre (100 g) + café ou thé sans sucre', kcal: 355 },
+              { text: 'Pain complet sans sel (60 g) + fromage frais / jben léger (40 g) + 1 œuf + radis/concombre + café ou thé sans sucre', kcal: 350 },
+              { text: 'Pain complet sans sel (60 g) + raïb nature sans sucre (125 g) + 10 g amandes effilées + 1/2 pomme + café/thé sans sucre', kcal: 355 }
+            ]
+          },
+          {
+            id: 'col1',
+            label: 'Collation matin',
+            time: '12h00',
+            options: [
+              { text: 'Café sans sucre + 1 biscuit complet ou galette de riz complet (15 g) + 6 amandes (8 g)', kcal: 130 },
+              { text: 'Café sans sucre + chocolat noir 70 % (15 g) + 1 noix (5 g)', kcal: 115 },
+              { text: 'Café sans sucre + yaourt nature 0–2 % (125 g)', kcal: 65 }
+            ]
+          },
+          {
+            id: 'dej',
+            label: 'Déjeuner',
+            time: '14h30',
+            options: [
+              { text: 'Tajine de kefta viande hachée 5 % MG (120 g cru) aux herbes + sauce tomate, poivrons et courgettes (220 g) + riz complet cuit (100 g) + 7 g huile d\'olive', kcal: 535 },
+              { text: 'Filet de sole ou cabillaud (140 g cru) + légumes tajine (carottes, courgettes, navets : 220 g) + lentilles cuites (110 g) + 8 g huile d\'olive', kcal: 520 },
+              { text: 'Blanc de poulet grillé (130 g cru) + aubergines et tomates rôties (200 g) + patate douce (110 g cuit) + 8 g huile d\'olive', kcal: 525 }
+            ]
+          },
+          {
+            id: 'col2',
+            label: 'Goûter',
+            time: '16h00',
+            options: [
+              { text: 'Café sans sucre + chocolat noir 70 % (15 g) + 1 clémentine ou kiwi (100 g)', kcal: 125 },
+              { text: 'Café sans sucre + yaourt nature (125 g) + 1 poire (140 g)', kcal: 150 },
+              { text: 'Tisane sans sucre + 1 pomme (150 g) + 5 amandes (7 g)', kcal: 130 }
+            ]
+          },
+          {
+            id: 'din',
+            label: 'Dîner',
+            time: '20h15',
+            options: [
+              { text: 'Zaalouk léger (aubergines, tomates, poivrons, ail : 220 g) + thon au naturel égoutté (100 g) + 6 g huile d\'olive + pain complet sans sel (35 g)', kcal: 430 },
+              { text: 'Soupe de courgettes et poireaux (250 ml) + filet de merlan vapeur/four (130 g cru) + 5 g huile d\'olive + pain complet sans sel (35 g)', kcal: 415 },
+              { text: 'Omelette aux herbes et champignons (2 œufs + 150 g champignons + 5 g huile d\'olive) + salade verte + pain complet sans sel (35 g)', kcal: 425 }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'vendredi',
+        shortName: 'Ven',
+        fullName: 'Vendredi',
+        sport: '',
+        meals: [
+          {
+            id: 'pdj',
+            label: 'Petit-déjeuner',
+            time: '09h30',
+            options: [
+              { text: 'Pain complet sans sel (60 g) + fromage frais allégé / jben (40 g) + 10 g noix concassées + 1/2 pomme + café/thé sans sucre', kcal: 360 },
+              { text: 'Pain complet sans sel (60 g) + 1 œuf dur + yaourt nature sans sucre (125 g) + tomate/concombre + café/thé sans sucre', kcal: 350 },
+              { text: 'Pain complet sans sel (60 g) + purée d\'amande (10 g) + 1 clémentine + café ou thé sans sucre', kcal: 335 }
+            ]
+          },
+          {
+            id: 'col1',
+            label: 'Collation matin',
+            time: '12h00',
+            options: [
+              { text: 'Café sans sucre + chocolat noir 70 % (15 g)', kcal: 85 },
+              { text: 'Café sans sucre + 1 biscuit complet pauvre en sucres (15 g)', kcal: 80 },
+              { text: 'Café sans sucre + 6 amandes nature (8 g)', kcal: 50 }
+            ]
+          },
+          {
+            id: 'dej',
+            label: 'Déjeuner',
+            time: '14h30',
+            options: [
+              { text: 'Filet de merlan, sole ou pageot au four (140 g cru) + carottes, navets, courgettes et fenouil (220 g) + patate douce ou pomme de terre vapeur (110 g cuit) + 8 g huile d\'olive', kcal: 530 },
+              { text: 'Tajine de poulet sans peau (130 g cru) aux légumes variés (220 g) + haricots blancs cuits (100 g) + 8 g huile d\'olive', kcal: 525 },
+              { text: 'Dorade royale grillée (140 g cru) + salade marocaine tomates/poivrons/oignons (200 g) + riz complet cuit (100 g) + 8 g huile d\'olive', kcal: 525 }
+            ]
+          },
+          {
+            id: 'col2',
+            label: 'Goûter',
+            time: '16h00',
+            options: [
+              { text: 'Café sans sucre + yaourt nature (125 g) + 1 poire (140 g)', kcal: 150 },
+              { text: 'Café sans sucre + chocolat noir 70 % (15 g) + 1 pomme (140 g)', kcal: 155 },
+              { text: 'Tisane sans sucre + fromage blanc 0–2 % (125 g) + 1 clémentine (90 g)', kcal: 120 }
+            ]
+          },
+          {
+            id: 'din',
+            label: 'Dîner',
+            time: '20h15',
+            options: [
+              { text: 'Soupe de courgettes et poireaux (250 ml) + blanc de poulet grillé aux herbes (120 g cru) + brocolis ou haricots verts (150 g) + 5 g huile d\'olive + pain complet sans sel (30 g)', kcal: 455 },
+              { text: 'Velouté de légumes maison (250 ml) + filet de cabillaud au citron (130 g cru) + 5 g huile d\'olive + pain complet sans sel (35 g)', kcal: 415 },
+              { text: '1 œuf dur + thon au naturel (70 g) + salade composée (tomate, concombre, laitue, haricots verts : 200 g) + 6 g huile d\'olive + pain complet sans sel (35 g)', kcal: 430 }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'samedi',
+        shortName: 'Sam',
+        fullName: 'Samedi',
+        sport: '🏊‍♀️ Salle : Piscine / Haltères',
+        meals: [
+          {
+            id: 'pdj',
+            label: 'Petit-déjeuner',
+            time: '09h30',
+            options: [
+              { text: 'Pain complet sans sel (60 g) + fromage frais léger / jben (40 g) + 1 œuf (60 g) + concombre et radis + café ou thé sans sucre', kcal: 350 },
+              { text: 'Pain complet sans sel (60 g) + 2 œufs à la coque + tomate en rondelles + café ou thé sans sucre', kcal: 355 },
+              { text: 'Pain complet sans sel (60 g) + raïb nature sans sucre (125 g) + 10 g noix + café/thé sans sucre', kcal: 345 }
+            ]
+          },
+          {
+            id: 'col1',
+            label: 'Collation matin',
+            time: '12h00',
+            options: [
+              { text: 'Café sans sucre + 1 biscuit complet pauvre en sucres (15–20 g) + 1 clémentine (80 g)', kcal: 120 },
+              { text: 'Café sans sucre + chocolat noir 70 % (15 g) + 5 amandes (7 g)', kcal: 130 },
+              { text: 'Café sans sucre + yaourt nature (125 g)', kcal: 65 }
+            ]
+          },
+          {
+            id: 'dej',
+            label: 'Déjeuner',
+            time: '14h30',
+            options: [
+              { text: 'Viande hachée 5 % MG (120 g cru) poêlée aux oignons, champignons et haricots verts (200 g) + lentilles ou haricots blancs cuits (100 g) + 7 g huile d\'olive', kcal: 535 },
+              { text: 'Filet de cabillaud ou dorade au four (140 g cru) + courgettes et tomates (200 g) + pommes de terre vapeur (110 g cuit) + 8 g huile d\'olive', kcal: 520 },
+              { text: 'Escalope de dinde ou poulet (130 g cru) + poêlée de légumes (220 g) + riz complet cuit (100 g) + 8 g huile d\'olive', kcal: 525 }
+            ]
+          },
+          {
+            id: 'col2',
+            label: 'Goûter',
+            time: '16h00',
+            options: [
+              { text: 'Café sans sucre + chocolat noir 70 % (15 g) + yaourt nature (125 g)', kcal: 155 },
+              { text: 'Café sans sucre + 1 pomme (150 g) + 6 amandes (8 g)', kcal: 130 },
+              { text: 'Tisane sans sucre + 1 poire (140 g) + fromage blanc 0–2 % (125 g)', kcal: 150 }
+            ]
+          },
+          {
+            id: 'din',
+            label: 'Dîner',
+            time: '20h15',
+            options: [
+              { text: 'Poisson blanc (dorade, cabillaud ou merlan : 130 g cru) en papillote au citron et herbes + légumes vapeur (200 g) + 5 g huile d\'olive + pain complet sans sel (35 g)', kcal: 420 },
+              { text: 'Soupe de légumes maison (250 ml) + omelette 2 œufs aux fines herbes + salade verte + pain complet sans sel (35 g)', kcal: 425 },
+              { text: 'Blanc de poulet froid ou tiède (110 g cru) + salade de tomates, concombre et haricots verts (200 g) + 6 g huile d\'olive + pain complet sans sel (35 g)', kcal: 420 }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'dimanche',
+        shortName: 'Dim',
+        fullName: 'Dimanche',
+        sport: '🌿 Repos & Repas familial',
+        meals: [
+          {
+            id: 'pdj',
+            label: 'Petit-déjeuner',
+            time: '09h30',
+            options: [
+              { text: 'Pain complet sans sel (60 g) + avocat écrasé (50 g) + 1 œuf dur (60 g) + tomate + café ou thé sans sucre', kcal: 375 },
+              { text: 'Pain complet sans sel (60 g) + fromage frais / jben léger (40 g) + 1 œuf + concombre + café ou thé sans sucre', kcal: 350 },
+              { text: 'Pain complet sans sel (60 g) + amlou allégé ou purée d\'amande (10 g) + yaourt nature (125 g) + café ou thé sans sucre', kcal: 350 }
+            ]
+          },
+          {
+            id: 'col1',
+            label: 'Collation matin',
+            time: '12h00',
+            options: [
+              { text: 'Café sans sucre + chocolat noir 70 % (15 g)', kcal: 85 },
+              { text: 'Café sans sucre + 1 biscuit complet pauvre en sucres (15 g)', kcal: 80 },
+              { text: 'Café sans sucre + 6 amandes nature (8 g)', kcal: 50 }
+            ]
+          },
+          {
+            id: 'dej',
+            label: 'Déjeuner',
+            time: '14h30',
+            options: [
+              { text: 'Plat familial partagé (tajine poisson blanc ou poulet aux légumes) : 120–130 g protéine + 200 g légumes + 100 g féculent cuit (pomme de terre/riz complet) + 1 c. à s. max huile d\'olive', kcal: 530 },
+              { text: 'Filet de saint-pierre, dorade ou merlan au four (140 g cru) + légumes rôtis (220 g) + lentilles cuites (110 g) + 8 g huile d\'olive', kcal: 520 },
+              { text: 'Tajine de poulet aux courgettes, carottes et haricots verts (130 g cru + 220 g légumes) + pain complet sans sel (45 g) + 8 g huile d\'olive', kcal: 525 }
+            ]
+          },
+          {
+            id: 'col2',
+            label: 'Goûter',
+            time: '16h00',
+            options: [
+              { text: 'Café sans sucre + 1 fruit de saison (pomme, poire ou 2 clémentines : 150 g) + 6 amandes (8 g)', kcal: 155 },
+              { text: 'Café sans sucre + chocolat noir 70 % (15 g) + yaourt nature (125 g)', kcal: 155 },
+              { text: 'Tisane sans sucre + fromage blanc 0–2 % (125 g) + 1 pomme (140 g)', kcal: 155 }
+            ]
+          },
+          {
+            id: 'din',
+            label: 'Dîner',
+            time: '20h15',
+            options: [
+              { text: 'Potage de légumes maison (250 ml) + fromage blanc ou yaourt nature (125 g) + 1 œuf dur ou 80 g de poisson blanc + pain complet sans sel (30 g)', kcal: 430 },
+              { text: 'Velouté de courgettes (250 ml) + filet de merlan grillé (120 g cru) + 5 g huile d\'olive + pain complet sans sel (35 g)', kcal: 410 },
+              { text: 'Zaalouk léger (200 g) + 2 œufs pochés + pain complet sans sel (35 g)', kcal: 420 }
+            ]
+          }
+        ]
+      }
+    ];
+
+    /**
+     * LISTE DE COURSES HEBDOMADAIRE (MAROC - 100 % CONFORME AUX EXCLUSIONS)
+     */
+    const SHOPPING_CATEGORIES = [
+      {
+        title: '🥬 Fruits & Légumes (Souk / Primeur)',
+        items: [
+          'Courgettes (~1,4 kg)',
+          'Haricots verts (~800 g)',
+          'Tomates (~1,5 kg)',
+          'Oignons (~1 kg) & Ail (1 tête)',
+          'Carottes (~1 kg)',
+          'Brocolis, chou ou navets (~700 g)',
+          'Poireaux (~400 g) & Fenouil (1 à 2 bulbes)',
+          'Aubergines (~700 g) & Poivrons (~500 g)',
+          'Concombres (~600 g) & Laitue / radis (~300 g)',
+          'Potiron / citrouille (~600 g) & Champignons (~250 g)',
+          'Persil et coriandre fraîche (3–4 bottes)',
+          'Pommes (~1 kg) & Poires (~600 g)',
+          'Clémentines / agrumes (~1,2 kg) & Citrons (~500 g)',
+          '1 Avocat mûr'
+        ]
+      },
+      {
+        title: '🐟 Poissons Blancs & Viandes Halal',
+        items: [
+          'Poissons blancs uniquement : merlan, cabillaud, dorade, sole ou pageot (~700 g)',
+          '1 boîte de thon au naturel (~100–140 g)',
+          'Filets de poulet ou dinde sans peau (~500 g)',
+          'Viande hachée à 5 % de matière grasse (~250 g chez le boucher)',
+          'Œufs frais (8 à 10 œufs)'
+        ]
+      },
+      {
+        title: '🥖 Féculents & Légumineuses',
+        items: [
+          'Pain complet sans sel (~500 g / semaine)',
+          'Lentilles (~250 g cuites ou 120 g sèches)',
+          'Haricots blancs (~200 g cuits ou 100 g secs)',
+          'Riz complet (~150 g cru)',
+          'Pommes de terre & patates douces (~500 g au total)'
+        ]
+      },
+      {
+        title: '🥛 Produits Laitiers',
+        items: [
+          'Yaourts nature ou raïb nature sans sucre (8 à 10 pots)',
+          'Fromage frais léger ou jben peu salé (~120 g)'
+        ]
+      },
+      {
+        title: '🫒 Épicerie & Collations',
+        items: [
+          'Huile d\'olive extra vierge (~100 ml / semaine)',
+          'Chocolat noir à 70 % de cacao min. (~100 g)',
+          'Amandes et noix nature non salées (~100 g au total)',
+          'Biscuits complets pauvres en sucres (~80 g)',
+          'Purée d\'amande ou amlou léger (~30 g)',
+          'Café, thé, tisanes (verveine, menthe, camomille) sans sucre',
+          'Épices marocaines (cumin, curcuma, gingembre, cannelle, paprika)'
+        ]
+      }
+    ];
+
+    // ÉTAT DE L'APPLICATION (SAUVEGARDÉ DANS LOCALSTORAGE)
+    const STORAGE_KEY = 'nutrition_maman_maroc_v1';
+
+    function getDefaultState() {
+      const jsDay = new Date().getDay(); // 0=Dim, 1=Lun...
+      const mappedIndex = jsDay === 0 ? 6 : jsDay - 1;
+      return {
+        selectedDayIndex: mappedIndex,
+        mealOptions: {},      // ex: "lundi_dej": 1
+        checkedMeals: {},     // ex: "lundi_dej": true
+        waterChecked: {},     // ex: "lundi": true
+        statinChecked: {},    // ex: "lundi": true
+        dailyLogs: {},        // ex: "lundi": { energy: 4, sleep: 'Bon', activity: 'Marche 4000+ pas', ankle: 'Aucune douleur' }
+        shoppingChecked: {},  // ex: "0_2": true
+        metricsHistory: [
+          { date: '05/12/2026 (Départ)', weight: '89.0', waist: '—' }
+        ]
+      };
+    }
+
+    let appState = loadState();
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return getDefaultState();
+        const parsed = JSON.parse(raw);
+        return { ...getDefaultState(), ...parsed };
+      } catch (e) {
+        return getDefaultState();
+      }
+    }
+
+    function saveState(showFeedback = false) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+        if (showFeedback) showToast('Enregistré sur le téléphone ✓');
+      } catch (e) {
+        console.error('Erreur sauvegarde locale', e);
+      }
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.classList.remove('opacity-0');
+      setTimeout(() => toast.classList.add('opacity-0'), 1800);
+    }
+
+    // NAVIGATION ENTRE ONGLETS
+    function switchTab(tabName) {
+      const tabs = ['today', 'tracking', 'shopping', 'ideas'];
+      tabs.forEach(t => {
+        const section = document.getElementById(`tab-${t}`);
+        const btn = document.getElementById(`nav-${t}`);
+        if (t === tabName) {
+          section.classList.remove('hidden');
+          btn.classList.remove('text-slate-500', 'font-medium', 'border-transparent');
+          btn.classList.add('text-sage-700', 'font-bold', 'border-sage-600');
+        } else {
+          section.classList.add('hidden');
+          btn.classList.add('text-slate-500', 'font-medium', 'border-transparent');
+          btn.classList.remove('text-sage-700', 'font-bold', 'border-sage-600');
+        }
+      });
+
+      if (tabName === 'tracking') renderTrackingTab();
+      if (tabName === 'shopping') renderShoppingTab();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // RENDU DE L'ONGLET AUJOURD'HUI
+    function renderTodayTab() {
+      const day = WEEKLY_PLAN[appState.selectedDayIndex];
+      const daySelector = document.getElementById('day-selector');
+      daySelector.innerHTML = '';
+
+      WEEKLY_PLAN.forEach((d, idx) => {
+        const isSelected = idx === appState.selectedDayIndex;
+        const btn = document.createElement('button');
+        btn.className = `px-3.5 py-2.5 rounded-xl text-sm font-bold shrink-0 transition border ${
+          isSelected
+            ? 'bg-sage-700 text-white border-sage-700 shadow-sm'
+            : 'bg-white text-slate-700 border-sage-200 hover:bg-sage-50'
+        }`;
+        btn.textContent = d.shortName;
+        btn.setAttribute('aria-label', d.fullName);
+        btn.onclick = () => {
+          appState.selectedDayIndex = idx;
+          saveState(false);
+          renderTodayTab();
+        };
+        daySelector.appendChild(btn);
+      });
+
+      // Indicateur jour de salle
+      const sportIndicator = document.getElementById('sport-day-indicator');
+      sportIndicator.textContent = day.sport || `${day.fullName} • Marche quotidienne`;
+
+      // Eau du matin
+      const waterDone = !!appState.waterChecked[day.id];
+      const waterBtn = document.getElementById('water-btn');
+      if (waterDone) {
+        waterBtn.textContent = 'Bu ✓';
+        waterBtn.className = 'px-3.5 py-2 rounded-xl text-xs font-bold border transition shrink-0 bg-sage-600 text-white border-sage-600';
+      } else {
+        waterBtn.textContent = 'Noter bu';
+        waterBtn.className = 'px-3.5 py-2 rounded-xl text-xs font-bold border transition shrink-0 bg-sage-50 text-sage-700 border-sage-300';
+      }
+
+      // Statine du soir
+      const statinDone = !!appState.statinChecked[day.id];
+      const statinBtn = document.getElementById('statin-today-btn');
+      if (statinDone) {
+        statinBtn.textContent = 'Prise ✓';
+        statinBtn.className = 'px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold border transition shrink-0 bg-sage-600 text-white border-sage-600';
+      } else {
+        statinBtn.textContent = 'Valider prise';
+        statinBtn.className = 'px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold border transition shrink-0 bg-white text-terra-700 border-terra-300';
+      }
+
+      // Cartes des 5 repas
+      const mealsContainer = document.getElementById('meals-container');
+      mealsContainer.innerHTML = '';
+
+      let totalKcal = 0;
+      let validatedCount = 0;
+
+      day.meals.forEach(meal => {
+        const key = `${day.id}_${meal.id}`;
+        const optionIndex = appState.mealOptions[key] || 0;
+        const currentOption = meal.options[optionIndex % meal.options.length];
+        const isChecked = !!appState.checkedMeals[key];
+
+        totalKcal += currentOption.kcal;
+        if (isChecked) validatedCount++;
+
+        const card = document.createElement('div');
+        card.className = `rounded-2xl p-4 border transition card-shadow ${
+          isChecked ? 'bg-sage-50/90 border-sage-300' : 'bg-white border-sage-200'
+        }`;
+
+        card.innerHTML = `
+          <div class="flex items-start justify-between gap-2 mb-2">
+            <div>
+              <span class="inline-block text-xs font-bold px-2.5 py-0.5 rounded-md bg-sage-100 text-sage-800 mr-1.5">${meal.time}</span>
+              <span class="text-base font-extrabold text-slate-800">${meal.label}</span>
+            </div>
+            <span class="text-xs font-bold text-sage-700 bg-sage-50 border border-sage-200 px-2.5 py-1 rounded-lg shrink-0">~${currentOption.kcal} kcal</span>
+          </div>
+          <p class="text-sm sm:text-base text-slate-700 leading-relaxed mb-3.5 ${isChecked ? 'line-through opacity-75' : ''}">
+            ${currentOption.text}
+          </p>
+          <div class="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
+            <button onclick="swapMealOption('${key}', ${meal.options.length})" class="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-bold bg-terra-50 text-terra-700 border border-terra-200 hover:bg-terra-100 active:scale-95 transition">
+              <span>🔄</span> Changer ce plat
+            </button>
+            <button onclick="toggleMealCheck('${key}')" class="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold border active:scale-95 transition ${
+              isChecked
+                ? 'bg-sage-600 text-white border-sage-600'
+                : 'bg-white text-sage-800 border-sage-300 hover:bg-sage-50'
+            }">
+              <span>${isChecked ? '✅ Validé' : '⬜ Valider'}</span>
+            </button>
+          </div>
+        `;
+        mealsContainer.appendChild(card);
+      });
+
+      // Mise à jour total calories et barre de progression
+      document.getElementById('daily-kcal-display').textContent = `${totalKcal.toLocaleString('fr-FR')} kcal`;
+      document.getElementById('meals-progress-text').textContent = `${validatedCount} / ${day.meals.length}`;
+      document.getElementById('meals-progress-bar').style.width = `${(validatedCount / day.meals.length) * 100}%`;
+    }
+
+    function swapMealOption(key, totalOptions) {
+      const current = appState.mealOptions[key] || 0;
+      appState.mealOptions[key] = (current + 1) % totalOptions;
+      saveState(true);
+      renderTodayTab();
+    }
+
+    function toggleMealCheck(key) {
+      appState.checkedMeals[key] = !appState.checkedMeals[key];
+      saveState(true);
+      renderTodayTab();
+    }
+
+    function toggleWaterCheck() {
+      const day = WEEKLY_PLAN[appState.selectedDayIndex];
+      appState.waterChecked[day.id] = !appState.waterChecked[day.id];
+      saveState(true);
+      renderTodayTab();
+    }
+
+    function toggleEveningStatin() {
+      const day = WEEKLY_PLAN[appState.selectedDayIndex];
+      appState.statinChecked[day.id] = !appState.statinChecked[day.id];
+      saveState(true);
+      renderTodayTab();
+    }
+
+    // RENDU DE L'ONGLET SUIVI & ÉNERGIE
+    function renderTrackingTab() {
+      const day = WEEKLY_PLAN[appState.selectedDayIndex];
+      document.getElementById('tracking-day-label').textContent = day.fullName;
+
+      const log = appState.dailyLogs[day.id] || {};
+
+      // 1. Énergie (1 à 5)
+      const energyContainer = document.getElementById('energy-rating');
+      energyContainer.innerHTML = '';
+      const energyDescriptions = {
+        1: '1/5 — Très fatiguée aujourd\'hui',
+        2: '2/5 — Énergie un peu basse',
+        3: '3/5 — Énergie correcte',
+        4: '4/5 — Bonne énergie',
+        5: '5/5 — Pleine forme !'
+      };
+      for (let i = 1; i <= 5; i++) {
+        const active = log.energy === i;
+        const btn = document.createElement('button');
+        btn.className = `py-3 rounded-xl font-extrabold text-base border transition active:scale-95 ${
+          active ? 'bg-sage-600 text-white border-sage-600 shadow-sm' : 'bg-sage-50 text-slate-700 border-sage-200'
+        }`;
+        btn.textContent = `${i} ★`;
+        btn.onclick = () => {
+          updateDailyLog('energy', i);
+        };
+        energyContainer.appendChild(btn);
+      }
+      document.getElementById('energy-label').textContent = log.energy
+        ? energyDescriptions[log.energy]
+        : 'Appuyez sur une note de 1 à 5';
+
+      // 2. Sommeil post-Fajr
+      const sleepContainer = document.getElementById('sleep-rating');
+      sleepContainer.innerHTML = '';
+      ['Difficile', 'Moyen', 'Bon sommeil'].forEach(opt => {
+        const active = log.sleep === opt;
+        const btn = document.createElement('button');
+        btn.className = `py-2.5 px-2 rounded-xl text-xs sm:text-sm font-bold border transition active:scale-95 ${
+          active ? 'bg-sage-600 text-white border-sage-600' : 'bg-sage-50 text-slate-700 border-sage-200'
+        }`;
+        btn.textContent = opt;
+        btn.onclick = () => updateDailyLog('sleep', opt);
+        sleepContainer.appendChild(btn);
+      });
+
+      // 3. Activité physique
+      const actContainer = document.getElementById('activity-options');
+      actContainer.innerHTML = '';
+      ['Marche < 4 000 pas', 'Marche ≥ 4 000 pas', 'Salle : Piscine', 'Salle : Spinning / Haltères'].forEach(opt => {
+        const active = log.activity === opt;
+        const btn = document.createElement('button');
+        btn.className = `py-2.5 px-2.5 rounded-xl text-xs sm:text-sm font-bold border transition active:scale-95 ${
+          active ? 'bg-sage-600 text-white border-sage-600' : 'bg-sage-50 text-slate-700 border-sage-200'
+        }`;
+        btn.textContent = opt;
+        btn.onclick = () => updateDailyLog('activity', opt);
+        actContainer.appendChild(btn);
+      });
+
+      // 4. Confort cheville
+      const ankleContainer = document.getElementById('ankle-options');
+      ankleContainer.innerHTML = '';
+      ['Aucune douleur', 'Gêne légère', 'Douleur'].forEach(opt => {
+        const active = log.ankle === opt;
+        const btn = document.createElement('button');
+        btn.className = `py-2.5 px-2 rounded-xl text-xs sm:text-sm font-bold border transition active:scale-95 ${
+          active ? 'bg-terra-600 text-white border-terra-600' : 'bg-terra-50 text-slate-700 border-terra-200'
+        }`;
+        btn.textContent = opt;
+        btn.onclick = () => updateDailyLog('ankle', opt);
+        ankleContainer.appendChild(btn);
+      });
+
+      renderMetricsHistory();
+    }
+
+    function updateDailyLog(field, value) {
+      const day = WEEKLY_PLAN[appState.selectedDayIndex];
+      if (!appState.dailyLogs[day.id]) appState.dailyLogs[day.id] = {};
+      appState.dailyLogs[day.id][field] = value;
+      saveState(true);
+      renderTrackingTab();
+    }
+
+    function saveBodyMetrics() {
+      const weightVal = document.getElementById('weight-input').value.trim();
+      const waistVal = document.getElementById('waist-input').value.trim();
+      if (!weightVal && !waistVal) {
+        showToast('Entrez un poids ou un tour de taille');
+        return;
+      }
+      const todayStr = new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      appState.metricsHistory.unshift({
+        date: todayStr,
+        weight: weightVal || '—',
+        waist: waistVal || '—'
+      });
+      document.getElementById('weight-input').value = '';
+      document.getElementById('waist-input').value = '';
+      saveState(true);
+      renderMetricsHistory();
+    }
+
+    function renderMetricsHistory() {
+      const container = document.getElementById('metrics-history');
+      container.innerHTML = '';
+      appState.metricsHistory.slice(0, 6).forEach(entry => {
+        const row = document.createElement('div');
+        row.className = 'flex items-center justify-between bg-sage-50 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm border border-sage-200';
+        row.innerHTML = `
+          <span class="font-semibold text-slate-700">${entry.date}</span>
+          <span class="font-bold text-sage-800">${entry.weight !== '—' ? entry.weight + ' kg' : ''} ${entry.waist !== '—' ? '• ' + entry.waist + ' cm' : ''}</span>
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    // RENDU DE L'ONGLET LISTE DE COURSES
+    function renderShoppingTab() {
+      const container = document.getElementById('shopping-container');
+      container.innerHTML = '';
+
+      SHOPPING_CATEGORIES.forEach((cat, catIdx) => {
+        const card = document.createElement('div');
+        card.className = 'bg-white rounded-2xl p-4 border border-sage-200 card-shadow space-y-2.5';
+
+        const header = document.createElement('h3');
+        header.className = 'text-base font-extrabold text-sage-800 border-b border-slate-100 pb-2';
+        header.textContent = cat.title;
+        card.appendChild(header);
+
+        cat.items.forEach((item, itemIdx) => {
+          const itemKey = `${catIdx}_${itemIdx}`;
+          const checked = !!appState.shoppingChecked[itemKey];
+
+          const row = document.createElement('button');
+          row.className = `w-full text-left flex items-center gap-3 py-2 px-2.5 rounded-xl transition ${
+            checked ? 'bg-sage-50 text-slate-400 line-through' : 'hover:bg-slate-50 text-slate-800'
+          }`;
+          row.innerHTML = `
+            <span class="text-lg shrink-0">${checked ? '☑️' : '⬜'}</span>
+            <span class="text-sm sm:text-base font-medium leading-snug">${item}</span>
+          `;
+          row.onclick = () => {
+            appState.shoppingChecked[itemKey] = !appState.shoppingChecked[itemKey];
+            saveState(false);
+            renderShoppingTab();
+          };
+          card.appendChild(row);
+        });
+
+        container.appendChild(card);
+      });
+    }
+
+    function resetShoppingList() {
+      appState.shoppingChecked = {};
+      saveState(true);
+      renderShoppingTab();
+    }
+
+    // INITIALISATION AU CHARGEMENT
+    window.addEventListener('DOMContentLoaded', () => {
+      renderTodayTab();
+    });
+  </script>
+</body>
+</html>
